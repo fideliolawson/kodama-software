@@ -32,7 +32,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "srv_midi_internal.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -60,6 +60,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define B1_EXTI_IRQn EXTI4_15_IRQn
 #define RCC_OSC32_IN_Pin GPIO_PIN_14
 #define RCC_OSC32_IN_GPIO_Port GPIOC
 #define RCC_OSC32_OUT_Pin GPIO_PIN_15
@@ -76,8 +77,10 @@ void Error_Handler(void);
 #define LD2_GPIO_Port GPIOA
 #define Note1_Pin GPIO_PIN_4
 #define Note1_GPIO_Port GPIOC
+#define Note1_EXTI_IRQn EXTI4_15_IRQn
 #define Note2_Pin GPIO_PIN_5
 #define Note2_GPIO_Port GPIOC
+#define Note2_EXTI_IRQn EXTI4_15_IRQn
 #define Note3_Pin GPIO_PIN_0
 #define Note3_GPIO_Port GPIOB
 #define TMS_Pin GPIO_PIN_13
