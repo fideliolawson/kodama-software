@@ -12,7 +12,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void srv_midi_internal_sendNote(uint8_t Note,uint8_t channel, uint8_t velocity, UART_HandleTypeDef uart);
-void srv_midi_internal_controlChange(uint8_t controlNumber, uint8_t controlValue);
+void srv_midi_internal_controlChange(uint8_t controlNumber, uint8_t controlValue, UART_HandleTypeDef uart);
 
 /* Private variables ---------------------------------------------------------*/
 uint8_t aTxBuffer[3];
@@ -32,5 +32,13 @@ void srv_midi_internal_sendNote(uint8_t note,uint8_t channel, uint8_t velocity,U
 	aTxBuffer[2] = velocityBuffer;
 	HAL_Delay(300); //Wait 300 ms
 	HAL_UART_Transmit(&uart, aTxBuffer, 3, 1000); //Send Note Off
+
+}
+
+void srv_midi_internal_controlChange(uint8_t controlNumber, uint8_t controlValue, UART_HandleTypeDef uart){
+	aTxBuffer[0] = CONTROL_CHANGE;
+	aTxBuffer[1] = controlNumber;
+	aTxBuffer[2] = controlValue;
+	HAL_UART_Transmit(&uart, aTxBuffer, 3, 1000);
 
 }
