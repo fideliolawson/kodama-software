@@ -42,7 +42,7 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc;
 
-TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
@@ -51,6 +51,8 @@ UART_HandleTypeDef huart2;
 
 uint8_t aTxBuffer[3];
 uint8_t CC1Value = 0;
+bool Note2_state = false;
+bool Note3_state = false;
 
 /* USER CODE END PV */
 
@@ -58,12 +60,13 @@ uint8_t CC1Value = 0;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
-static void MX_TIM1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_ADC_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 void EXTI4_15_IRQHandler_Config(void);
-bool state = true;
+void GET_ADC_Value(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -99,9 +102,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  MX_TIM1_Init();
   MX_USART1_UART_Init();
   MX_ADC_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   HAL_ADCEx_Calibration_Start(&hadc);
 
@@ -114,9 +117,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  HAL_Delay(1000);
-	  HAL_ADC_Start_IT(&hadc);
-
+//	  HAL_Delay(1000);
+//	  srv_midi_internal_sendNote(0x3C, 0x00, 0x5A,huart1);
+//	  HAL_Delay(200);
+//	  srv_midi_internal_sendNote(0x3C, 0x00, 0x00,huart1);
 
   }
   /* USER CODE END 3 */
@@ -221,48 +225,47 @@ static void MX_ADC_Init(void)
 }
 
 /**
-  * @brief TIM1 Initialization Function
+  * @brief TIM3 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_TIM1_Init(void)
+static void MX_TIM3_Init(void)
 {
 
-  /* USER CODE BEGIN TIM1_Init 0 */
+  /* USER CODE BEGIN TIM3_Init 0 */
 
-  /* USER CODE END TIM1_Init 0 */
+  /* USER CODE END TIM3_Init 0 */
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
-  /* USER CODE BEGIN TIM1_Init 1 */
+  /* USER CODE BEGIN TIM3_Init 1 */
 
-  /* USER CODE END TIM1_Init 1 */
-  htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 32000;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 50;
-  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 74;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 63999;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
   {
     Error_Handler();
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
   {
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN TIM1_Init 2 */
+  /* USER CODE BEGIN TIM3_Init 2 */
 
-  /* USER CODE END TIM1_Init 2 */
+  /* USER CODE END TIM3_Init 2 */
 
 }
 
@@ -367,19 +370,28 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Note1_Pin Note2_Pin */
-  GPIO_InitStruct.Pin = Note1_Pin|Note2_Pin;
+  /*Configure GPIO pin : Note1_Pin */
+  GPIO_InitStruct.Pin = Note1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(Note1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Note2_Pin */
+  GPIO_InitStruct.Pin = Note2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Note2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : Note3_Pin */
   GPIO_InitStruct.Pin = Note3_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(Note3_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
+
   HAL_NVIC_SetPriority(EXTI4_15_IRQn, 1, 0);
   HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
@@ -391,26 +403,27 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	switch (GPIO_Pin) {
 		case Note1_Pin:
-			if (state == true){
-				srv_midi_internal_sendNote(0x3C, 0x00, 0x5A,huart1);
-				HAL_TIM_Base_Start_IT(&htim1);
-				state = false;
-			}
-
 			break;
 		case Note2_Pin:
-			if (state == true){
-				srv_midi_internal_sendNote(0x3E, 0x00, 0x5A,huart1);
-				HAL_TIM_Base_Start_IT(&htim1);
-				state = false;
+			if (HAL_GPIO_ReadPin(Note2_GPIO_Port, Note2_Pin)== GPIO_PIN_SET && Note2_state != true){
+				srv_midi_internal_sendNote(0x3C, 0x00, 0x5A,huart1);
+				Note2_state = true;
+				}
+			else if (HAL_GPIO_ReadPin(Note2_GPIO_Port, Note2_Pin)== GPIO_PIN_RESET && Note2_state != false) {
+				srv_midi_internal_sendNote(0x3C, 0x00, 0x00,huart1);
+				Note2_state = false;
 			}
 			break;
 		case Note3_Pin:
-			if (state == true){
-				srv_midi_internal_sendNote(0x40, 0x00, 0x5A,huart1);
-				HAL_TIM_Base_Start_IT(&htim1);
-				state = false;
-			}
+			if (HAL_GPIO_ReadPin(Note3_GPIO_Port, Note3_Pin)== GPIO_PIN_SET){
+							srv_midi_internal_sendNote(0x1A, 0x00, 0x5A,huart1);
+							Note3_state = true;
+							}
+						else if (HAL_GPIO_ReadPin(Note3_GPIO_Port, Note3_Pin)== GPIO_PIN_RESET) {
+							srv_midi_internal_sendNote(0x1A, 0x00, 0x00,huart1);
+							Note3_state = false;
+						}
+
 			break;
 		default:
 			break;
@@ -425,29 +438,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* NOTE : This function should not be modified, when the callback is needed,
             the HAL_TIM_PeriodElapsedCallback could be implemented in the user file
    */
-	if(HAL_GPIO_ReadPin(Note1_GPIO_Port, Note1_Pin) == GPIO_PIN_SET ){
+ //Non blocking delay for getting ADC value every x ms
+  GET_ADC_Value();
+  HAL_TIM_Base_Stop_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim3);
 
-		state = true;
-		HAL_TIM_Base_Stop_IT(&htim1);
-	}
-	else if (HAL_GPIO_ReadPin(Note2_GPIO_Port, Note2_Pin) == GPIO_PIN_SET ){
-
-		state = true;
-		HAL_TIM_Base_Stop_IT(&htim1);
-	}
-	else if (HAL_GPIO_ReadPin(Note3_GPIO_Port, Note3_Pin) == GPIO_PIN_SET ){
-
-		state = true;
-		HAL_TIM_Base_Stop_IT(&htim1);
-	}
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) //Callback when ADC got a value
 {
     // Read & Update The ADC Result
 	//HAL_Delay(1000);
-    CC1Value = HAL_ADC_GetValue(hadc)*127;
-    srv_midi_internal_controlChange(1,CC1Value,huart2);
+	uint8_t TempValue_1;
+	TempValue_1 = HAL_ADC_GetValue(hadc)*127;
+    if (TempValue_1 != CC1Value){
+    	CC1Value = TempValue_1;
+    	srv_midi_internal_controlChange(1,CC1Value,huart2);
+    }
+
+}
+
+void GET_ADC_Value(void){ //Function to get all ADC values
+
+	HAL_ADC_Start_IT(&hadc);
+
 }
 /* USER CODE END 4 */
 

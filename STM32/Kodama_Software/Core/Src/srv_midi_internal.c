@@ -27,12 +27,6 @@ void srv_midi_internal_sendNote(uint8_t note,uint8_t channel, uint8_t velocity,U
 	aTxBuffer[1] = noteBuffer;
 	aTxBuffer[2] = velocityBuffer;
 	HAL_UART_Transmit(&uart, aTxBuffer, 3, 1000);
-	aTxBuffer[0] = channelBuffer+NOTE_OFF;
-	aTxBuffer[1] = noteBuffer;
-	aTxBuffer[2] = velocityBuffer;
-	HAL_Delay(300); //Wait 300 ms
-	HAL_UART_Transmit(&uart, aTxBuffer, 3, 1000); //Send Note Off
-
 }
 
 void srv_midi_internal_controlChange(uint8_t controlNumber, uint8_t controlValue, UART_HandleTypeDef uart){

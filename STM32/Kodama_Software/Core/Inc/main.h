@@ -85,6 +85,7 @@ void Error_Handler(void);
 #define Note2_EXTI_IRQn EXTI4_15_IRQn
 #define Note3_Pin GPIO_PIN_0
 #define Note3_GPIO_Port GPIOB
+#define Note3_EXTI_IRQn EXTI0_1_IRQn
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14

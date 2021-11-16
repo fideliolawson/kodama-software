@@ -1,2 +1,2 @@
-srv_midi_internal.c:21:6:srv_midi_internal_sendNote	40	static
-srv_midi_internal.c:38:6:srv_midi_internal_controlChange	24	static
+srv_midi_internal.c:21:6:srv_midi_internal_sendNote	32	static
+srv_midi_internal.c:32:6:srv_midi_internal_controlChange	24	static
