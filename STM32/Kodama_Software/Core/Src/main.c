@@ -42,6 +42,8 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc;
 
+I2C_HandleTypeDef hi2c1;
+
 TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
@@ -50,9 +52,22 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 
 uint8_t aTxBuffer[3];
-uint8_t CC1Value = 0;
-bool Note2_state = false;
+uint8_t CC1Value = 60;
+uint8_t CC2Value = 60;
+uint8_t CC3Value = 60;
+uint8_t CC4Value = 60;
+uint8_t VideoSelector = 19;
+bool UpPad1_state = false;
+bool UpPad2_state = false;
+bool UpPad3_state = false;
+bool UpPad4_state = false;
+bool DownPad1_state = false;
+bool DownPad2_state = false;
+bool DownPad3_state = false;
+bool DownPad4_state = false;
 bool Note3_state = false;
+bool Play1 = false;
+bool Play2 = false;
 
 /* USER CODE END PV */
 
@@ -63,9 +78,11 @@ static void MX_USART2_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_ADC_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 void EXTI4_15_IRQHandler_Config(void);
 void GET_ADC_Value(void);
+void ADC_Select_CH11 (void);
 
 /* USER CODE END PFP */
 
@@ -105,8 +122,11 @@ int main(void)
   MX_USART1_UART_Init();
   MX_ADC_Init();
   MX_TIM3_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HAL_ADCEx_Calibration_Start(&hadc);
+  HAL_TIM_Base_Start_IT(&htim3);
+  //srv_iqs5xx_init();
 
   /* USER CODE END 2 */
 
@@ -164,8 +184,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_I2C1;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -196,10 +217,10 @@ static void MX_ADC_Init(void)
   hadc.Init.Resolution = ADC_RESOLUTION_12B;
   hadc.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc.Init.ScanConvMode = ADC_SCAN_DIRECTION_FORWARD;
-  hadc.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc.Init.LowPowerAutoWait = DISABLE;
   hadc.Init.LowPowerAutoPowerOff = DISABLE;
-  hadc.Init.ContinuousConvMode = DISABLE;
+  hadc.Init.ContinuousConvMode = ENABLE;
   hadc.Init.DiscontinuousConvMode = DISABLE;
   hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -218,9 +239,62 @@ static void MX_ADC_Init(void)
   {
     Error_Handler();
   }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_11;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN ADC_Init 2 */
 
   /* USER CODE END ADC_Init 2 */
+
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x0000020B;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
 
 }
 
@@ -370,23 +444,25 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : Note1_Pin */
-  GPIO_InitStruct.Pin = Note1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(Note1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : Note2_Pin */
-  GPIO_InitStruct.Pin = Note2_Pin;
+  /*Configure GPIO pins : UpPad1_Pin DownPad1_Pin Piezo2_Pin */
+  GPIO_InitStruct.Pin = UpPad1_Pin|DownPad1_Pin|Piezo2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(Note2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : Note3_Pin */
-  GPIO_InitStruct.Pin = Note3_Pin;
+  /*Configure GPIO pins : UpPad2_Pin DownPad2_Pin UpPad3_Pin DownPad3_Pin
+                           UpPad4_Pin Piezo3_Pin */
+  GPIO_InitStruct.Pin = UpPad2_Pin|DownPad2_Pin|UpPad3_Pin|DownPad3_Pin
+                          |UpPad4_Pin|Piezo3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(Note3_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Piezo1_Pin DownPad4_Pin */
+  GPIO_InitStruct.Pin = Piezo1_Pin|DownPad4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_1_IRQn, 0, 0);
@@ -402,29 +478,104 @@ static void MX_GPIO_Init(void)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	switch (GPIO_Pin) {
-		case Note1_Pin:
-			break;
-		case Note2_Pin:
-			if (HAL_GPIO_ReadPin(Note2_GPIO_Port, Note2_Pin)== GPIO_PIN_SET && Note2_state != true){
-				srv_midi_internal_sendNote(0x3C, 0x00, 0x5A,huart1);
-				Note2_state = true;
+
+		case UpPad1_Pin:
+			if (HAL_GPIO_ReadPin(UpPad1_GPIO_Port, UpPad1_Pin)== GPIO_PIN_SET && UpPad1_state != true){
+				CC1Value ++;
+				srv_midi_internal_controlChange(1, CC1Value, huart1);
+				UpPad1_state = true;
 				}
-			else if (HAL_GPIO_ReadPin(Note2_GPIO_Port, Note2_Pin)== GPIO_PIN_RESET && Note2_state != false) {
-				srv_midi_internal_sendNote(0x3C, 0x00, 0x00,huart1);
-				Note2_state = false;
+			else if (HAL_GPIO_ReadPin(UpPad1_GPIO_Port, UpPad1_Pin)== GPIO_PIN_RESET && UpPad1_state != false) {
+				UpPad1_state = false;
 			}
 			break;
-		case Note3_Pin:
-			if (HAL_GPIO_ReadPin(Note3_GPIO_Port, Note3_Pin)== GPIO_PIN_SET){
-							srv_midi_internal_sendNote(0x1A, 0x00, 0x5A,huart1);
-							Note3_state = true;
-							}
-						else if (HAL_GPIO_ReadPin(Note3_GPIO_Port, Note3_Pin)== GPIO_PIN_RESET) {
-							srv_midi_internal_sendNote(0x1A, 0x00, 0x00,huart1);
-							Note3_state = false;
-						}
 
+		case UpPad2_Pin:
+					if (HAL_GPIO_ReadPin(UpPad2_GPIO_Port, UpPad2_Pin)== GPIO_PIN_SET && UpPad2_state != true){
+						CC2Value ++;
+						srv_midi_internal_controlChange(2, CC2Value, huart1);
+						UpPad2_state = true;
+						}
+					else if (HAL_GPIO_ReadPin(UpPad2_GPIO_Port, UpPad2_Pin)== GPIO_PIN_RESET && UpPad2_state != false) {
+						UpPad2_state = false;
+					}
+					break;
+
+		case UpPad3_Pin:
+							if (HAL_GPIO_ReadPin(UpPad3_GPIO_Port, UpPad3_Pin)== GPIO_PIN_SET && UpPad3_state != true){
+								CC3Value ++;
+								srv_midi_internal_controlChange(3, CC3Value, huart1);
+								UpPad3_state = true;
+								}
+							else if (HAL_GPIO_ReadPin(UpPad3_GPIO_Port, UpPad3_Pin)== GPIO_PIN_RESET && UpPad3_state != false) {
+								UpPad3_state = false;
+							}
+							break;
+
+		case UpPad4_Pin:
+									if (HAL_GPIO_ReadPin(UpPad4_GPIO_Port, UpPad4_Pin)== GPIO_PIN_SET && UpPad4_state != true){
+										if (VideoSelector<27){
+											VideoSelector++;
+											srv_midi_internal_sendNote(VideoSelector, 3, 60, huart1);
+										}
+										UpPad4_state = true;
+										}
+									else if (HAL_GPIO_ReadPin(UpPad4_GPIO_Port, UpPad4_Pin)== GPIO_PIN_RESET && UpPad4_state != false) {
+										UpPad4_state = false;
+										srv_midi_internal_sendNote(VideoSelector, 3, 0, huart1);
+									}
+									break;
+
+		case DownPad1_Pin:
+			if (HAL_GPIO_ReadPin(DownPad1_GPIO_Port, DownPad1_Pin)== GPIO_PIN_SET && DownPad1_state != true){
+				CC1Value --;
+				srv_midi_internal_controlChange(1, CC1Value, huart1);
+				DownPad1_state = true;
+				}
+			else if (HAL_GPIO_ReadPin(DownPad1_GPIO_Port, DownPad1_Pin)== GPIO_PIN_RESET && DownPad1_state != false) {
+				DownPad1_state = false;
+			}
 			break;
+
+		case DownPad2_Pin:
+					if (HAL_GPIO_ReadPin(DownPad2_GPIO_Port, DownPad2_Pin)== GPIO_PIN_SET && DownPad2_state != true){
+						CC2Value --;
+						srv_midi_internal_controlChange(2, CC2Value, huart1);
+						DownPad2_state = true;
+						}
+					else if (HAL_GPIO_ReadPin(DownPad2_GPIO_Port, DownPad2_Pin)== GPIO_PIN_RESET && DownPad2_state != false) {
+						DownPad2_state = false;
+					}
+					break;
+
+		case DownPad3_Pin:
+							if (HAL_GPIO_ReadPin(DownPad3_GPIO_Port, DownPad3_Pin)== GPIO_PIN_SET && DownPad3_state != true){
+								CC3Value --;
+								srv_midi_internal_controlChange(3, CC3Value, huart1);
+								DownPad3_state = true;
+								}
+							else if (HAL_GPIO_ReadPin(DownPad3_GPIO_Port, DownPad3_Pin)== GPIO_PIN_RESET && DownPad3_state != false) {
+								DownPad3_state = false;
+							}
+							break;
+
+		case DownPad4_Pin:
+									if (HAL_GPIO_ReadPin(DownPad4_GPIO_Port, DownPad4_Pin)== GPIO_PIN_SET && DownPad4_state != true){
+										if (VideoSelector>19){
+											VideoSelector--;
+											srv_midi_internal_sendNote(VideoSelector, 3, 60, huart1);
+										}
+										DownPad3_state = true;
+										}
+									else if (HAL_GPIO_ReadPin(DownPad3_GPIO_Port, DownPad3_Pin)== GPIO_PIN_RESET && DownPad3_state != false) {
+										DownPad3_state = false;
+										srv_midi_internal_sendNote(VideoSelector, 3, 0, huart1);
+									}
+									break;
+
+//		case RDY_PIN_Pin: if (HAL_GPIO_ReadPin(RDY_PIN_GPIO_Port, RDY_PIN_Pin)== GPIO_PIN_RESET){
+//			srv_iqs5xx_callback();
+//		}
 		default:
 			break;
 	}
@@ -449,13 +600,43 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) //Callback when ADC got a
 {
     // Read & Update The ADC Result
 	//HAL_Delay(1000);
-	uint8_t TempValue_1;
-	TempValue_1 = HAL_ADC_GetValue(hadc)*127;
-    if (TempValue_1 != CC1Value){
-    	CC1Value = TempValue_1;
-    	srv_midi_internal_controlChange(1,CC1Value,huart2);
+	uint16_t LumValue_1 = HAL_ADC_GetValue(hadc);
+    if (LumValue_1 < LUM1THRESHOLD && Play1 !=true){
+    	srv_midi_internal_sendNote(PLAY1_NOTE, 1, 50, huart1);
+    	Play1 = true;
+    }
+    else if (LumValue_1 >= LUM1THRESHOLD && Play1 == true) {
+    	Play1 = false;
+    	srv_midi_internal_sendNote(PLAY1_NOTE, 1, 0, huart1);
     }
 
+    HAL_ADC_Stop_IT(hadc);
+
+    ADC_Select_CH11();
+    HAL_ADC_Start(hadc);
+    HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+    uint16_t LumValue_2 = HAL_ADC_GetValue(hadc);
+        if (LumValue_2 < LUM2THRESHOLD && Play2 !=true){
+        	srv_midi_internal_sendNote(PLAY2_NOTE, 1, 50, huart1);
+        	Play2 = true;
+        }
+        else if (LumValue_2 >= LUM2THRESHOLD && Play2 == true) {
+        	Play2 = false;
+        	srv_midi_internal_sendNote(PLAY2_NOTE, 1, 0, huart1);
+        }
+        HAL_ADC_Stop(hadc);
+}
+
+void ADC_Select_CH11 (void)
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+	  */
+	  sConfig.Channel = ADC_CHANNEL_11;
+	  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
 }
 
 void GET_ADC_Value(void){ //Function to get all ADC values
