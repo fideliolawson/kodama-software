@@ -103,14 +103,23 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     __HAL_RCC_ADC1_CLK_ENABLE();
 
     __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     /**ADC GPIO Configuration
     PC0     ------> ADC_IN10
     PC1     ------> ADC_IN11
+    PC2     ------> ADC_IN12
+    PC3     ------> ADC_IN13
+    PA0     ------> ADC_IN0
     */
-    GPIO_InitStruct.Pin = Photo_resistor1_Pin|Photo_resistor2_Pin;
+    GPIO_InitStruct.Pin = Photo_resistor1_Pin|Photo_resistor2_Pin|Photo_resistor3_Pin|Photo_resistor4_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = Photo_resistor5_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(Photo_resistor5_GPIO_Port, &GPIO_InitStruct);
 
     /* ADC1 interrupt Init */
     HAL_NVIC_SetPriority(ADC1_IRQn, 0, 0);
@@ -141,8 +150,13 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     /**ADC GPIO Configuration
     PC0     ------> ADC_IN10
     PC1     ------> ADC_IN11
+    PC2     ------> ADC_IN12
+    PC3     ------> ADC_IN13
+    PA0     ------> ADC_IN0
     */
-    HAL_GPIO_DeInit(GPIOC, Photo_resistor1_Pin|Photo_resistor2_Pin);
+    HAL_GPIO_DeInit(GPIOC, Photo_resistor1_Pin|Photo_resistor2_Pin|Photo_resistor3_Pin|Photo_resistor4_Pin);
+
+    HAL_GPIO_DeInit(Photo_resistor5_GPIO_Port, Photo_resistor5_Pin);
 
     /* ADC1 interrupt DeInit */
     HAL_NVIC_DisableIRQ(ADC1_IRQn);

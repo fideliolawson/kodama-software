@@ -53,6 +53,7 @@ UART_HandleTypeDef huart2;
 
 uint8_t aTxBuffer[3];
 uint8_t CC1Value = 60;
+uint8_t nbTest = 0;
 uint8_t CC2Value = 60;
 uint8_t CC3Value = 60;
 uint8_t CC4Value = 60;
@@ -65,9 +66,22 @@ bool DownPad1_state = false;
 bool DownPad2_state = false;
 bool DownPad3_state = false;
 bool DownPad4_state = false;
+bool Piezo1_state = false;
+bool Piezo2_state = false;
+bool Piezo3_state = false;
 bool Note3_state = false;
 bool Play1 = false;
 bool Play2 = false;
+bool Play3 = false;
+bool Play4 = false;
+bool Play5 = false;
+bool initPassed = false;
+int lum1average = 0;
+int lum2average = 0;
+int lum3average = 0;
+int Lum1threshold = 0;
+int Lum2threshold = 0;
+int Lum3threshold = 0;
 
 /* USER CODE END PV */
 
@@ -83,6 +97,9 @@ static void MX_I2C1_Init(void);
 void EXTI4_15_IRQHandler_Config(void);
 void GET_ADC_Value(void);
 void ADC_Select_CH11 (void);
+void ADC_Select_CH0 (void);
+void ADC_Select_CH12 (void);
+void ADC_Select_CH13 (void);
 
 /* USER CODE END PFP */
 
@@ -117,13 +134,14 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  //MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   MX_ADC_Init();
   MX_TIM3_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_Delay(1000);
   HAL_ADCEx_Calibration_Start(&hadc);
   HAL_TIM_Base_Start_IT(&htim3);
   //srv_iqs5xx_init();
@@ -232,7 +250,7 @@ static void MX_ADC_Init(void)
   }
   /** Configure for the selected ADC regular channel to be converted.
   */
-  sConfig.Channel = ADC_CHANNEL_10;
+  sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
   sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
   if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
@@ -241,7 +259,28 @@ static void MX_ADC_Init(void)
   }
   /** Configure for the selected ADC regular channel to be converted.
   */
+  sConfig.Channel = ADC_CHANNEL_10;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
   sConfig.Channel = ADC_CHANNEL_11;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_12;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_13;
   if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -481,7 +520,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 		case UpPad1_Pin:
 			if (HAL_GPIO_ReadPin(UpPad1_GPIO_Port, UpPad1_Pin)== GPIO_PIN_SET && UpPad1_state != true){
-				CC1Value ++;
+				if (CC1Value<126){
+					CC1Value ++;
+				}
 				srv_midi_internal_controlChange(1, CC1Value, huart1);
 				UpPad1_state = true;
 				}
@@ -528,7 +569,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 		case DownPad1_Pin:
 			if (HAL_GPIO_ReadPin(DownPad1_GPIO_Port, DownPad1_Pin)== GPIO_PIN_SET && DownPad1_state != true){
-				CC1Value --;
+				if (CC1Value>0){
+					CC1Value --;
+				}
 				srv_midi_internal_controlChange(1, CC1Value, huart1);
 				DownPad1_state = true;
 				}
@@ -573,6 +616,38 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 									}
 									break;
 
+		case Piezo1_Pin:
+											if (HAL_GPIO_ReadPin(Piezo1_GPIO_Port, Piezo1_Pin)== GPIO_PIN_SET && Piezo1_state != true){
+												srv_midi_internal_sendNote(24, 4, 60, huart1);
+												Piezo1_state = true;
+												}
+											else if (HAL_GPIO_ReadPin(Piezo1_GPIO_Port, Piezo1_Pin)== GPIO_PIN_RESET && Piezo1_state != false) {
+												Piezo1_state = false;
+												srv_midi_internal_sendNote(24, 4, 0, huart1);
+											}
+											break;
+		case Piezo2_Pin:
+											if (HAL_GPIO_ReadPin(Piezo2_GPIO_Port, Piezo2_Pin)== GPIO_PIN_SET && Piezo2_state != true){
+												srv_midi_internal_sendNote(24, 5, 60, huart1);
+												Piezo2_state = true;
+												}
+											else if (HAL_GPIO_ReadPin(Piezo2_GPIO_Port, Piezo2_Pin)== GPIO_PIN_RESET && Piezo2_state != false) {
+												Piezo2_state = false;
+												srv_midi_internal_sendNote(24, 5, 0, huart1);
+											}
+											break;
+
+		case Piezo3_Pin:
+													if (HAL_GPIO_ReadPin(Piezo3_GPIO_Port, Piezo3_Pin)== GPIO_PIN_SET && Piezo3_state != true){
+														srv_midi_internal_sendNote(24, 6, 60, huart1);
+														Piezo3_state = true;
+														}
+													else if (HAL_GPIO_ReadPin(Piezo3_GPIO_Port, Piezo3_Pin)== GPIO_PIN_RESET && Piezo3_state != false) {
+														Piezo3_state = false;
+														srv_midi_internal_sendNote(24, 6, 0, huart1);
+													}
+													break;
+
 //		case RDY_PIN_Pin: if (HAL_GPIO_ReadPin(RDY_PIN_GPIO_Port, RDY_PIN_Pin)== GPIO_PIN_RESET){
 //			srv_iqs5xx_callback();
 //		}
@@ -594,37 +669,117 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   HAL_TIM_Base_Stop_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim3);
 
+
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) //Callback when ADC got a value
 {
     // Read & Update The ADC Result
 	//HAL_Delay(1000);
+	if (initPassed == false){
+		if(nbTest<11){
+			//HAL_Delay(DELAYUPDATEPHOTO);
+			uint16_t LumValue_1 = HAL_ADC_GetValue(hadc);
+			if (nbTest !=0){lum1average = LumValue_1 + lum1average;}
+			HAL_ADC_Stop_IT(hadc);
+			ADC_Select_CH11();
+			//HAL_Delay(DELAYUPDATEPHOTO);
+			HAL_ADC_Start(hadc);
+			HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+			uint16_t LumValue_2 = HAL_ADC_GetValue(hadc);
+			if (nbTest != 0){lum2average = LumValue_2 + lum2average;}
+			HAL_ADC_Stop(hadc);
+
+			ADC_Select_CH12();
+			//HAL_Delay(DELAYUPDATEPHOTO);
+			HAL_ADC_Start(hadc);
+			HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+			uint16_t LumValue_3 = HAL_ADC_GetValue(hadc);
+			if (nbTest != 0){lum3average = LumValue_3 + lum3average;}
+			HAL_ADC_Stop(hadc);
+
+			nbTest++;
+		}
+		else {
+			Lum1threshold = lum1average/10 - 100;
+			Lum2threshold = lum2average/10 - 100;
+			Lum3threshold = lum3average/10 - 100;
+			initPassed = true;
+		}
+	}
+	else if (initPassed == true){
+	//HAL_Delay(DELAYUPDATEPHOTO);
 	uint16_t LumValue_1 = HAL_ADC_GetValue(hadc);
-    if (LumValue_1 < LUM1THRESHOLD && Play1 !=true){
-    	srv_midi_internal_sendNote(PLAY1_NOTE, 1, 50, huart1);
-    	Play1 = true;
-    }
-    else if (LumValue_1 >= LUM1THRESHOLD && Play1 == true) {
-    	Play1 = false;
-    	srv_midi_internal_sendNote(PLAY1_NOTE, 1, 0, huart1);
-    }
+	if (LumValue_1 < Lum1threshold && Play1 !=true){
+		srv_midi_internal_sendNote(PLAY1_NOTE, 0, 50, huart1);
+		Play1 = true;
+	}
+	else if (LumValue_1 >= Lum1threshold && Play1 == true) {
+		Play1 = false;
+		srv_midi_internal_sendNote(PLAY1_NOTE, 0, 0, huart1);
+	}
 
-    HAL_ADC_Stop_IT(hadc);
+	HAL_ADC_Stop_IT(hadc);
 
-    ADC_Select_CH11();
-    HAL_ADC_Start(hadc);
-    HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
-    uint16_t LumValue_2 = HAL_ADC_GetValue(hadc);
-        if (LumValue_2 < LUM2THRESHOLD && Play2 !=true){
-        	srv_midi_internal_sendNote(PLAY2_NOTE, 1, 50, huart1);
-        	Play2 = true;
-        }
-        else if (LumValue_2 >= LUM2THRESHOLD && Play2 == true) {
-        	Play2 = false;
-        	srv_midi_internal_sendNote(PLAY2_NOTE, 1, 0, huart1);
-        }
-        HAL_ADC_Stop(hadc);
+	ADC_Select_CH11();
+	//HAL_Delay(DELAYUPDATEPHOTO);
+	HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+	uint16_t LumValue_2 = HAL_ADC_GetValue(hadc);
+		if (LumValue_2 < Lum2threshold && Play2 !=true){
+			srv_midi_internal_sendNote(PLAY2_NOTE, 0, 50, huart1);
+			Play2 = true;
+		}
+		else if (LumValue_2 >= Lum2threshold && Play2 == true) {
+			Play2 = false;
+			srv_midi_internal_sendNote(PLAY2_NOTE, 0, 0, huart1);
+		}
+		HAL_ADC_Stop(hadc);
+
+		ADC_Select_CH12();
+		//HAL_Delay(DELAYUPDATEPHOTO);
+		HAL_ADC_Start(hadc);
+		HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+		uint16_t LumValue_3 = HAL_ADC_GetValue(hadc);
+			if (LumValue_3 < Lum3threshold && Play3 !=true){
+				srv_midi_internal_sendNote(PLAY3_NOTE, 0, 50, huart1);
+				Play3 = true;
+			}
+			else if (LumValue_3 >= Lum3threshold && Play3 == true) {
+				Play3 = false;
+				srv_midi_internal_sendNote(PLAY3_NOTE, 0, 0, huart1);
+			}
+		HAL_ADC_Stop(hadc);
+	//
+	//		ADC_Select_CH13();
+	//		HAL_ADC_Start(hadc);
+	//		HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+	//		uint16_t LumValue_4 = HAL_ADC_GetValue(hadc);
+	//			if (LumValue_4 < LUM4THRESHOLD && Play4 !=true){
+	//				srv_midi_internal_sendNote(PLAY4_NOTE, 1, 50, huart1);
+	//				Play3 = true;
+	//			}
+	//			else if (LumValue_4 >= LUM4THRESHOLD && Play4 == true) {
+	//				Play4 = false;
+	//				srv_midi_internal_sendNote(PLAY4_NOTE, 1, 0, huart1);
+	//			}
+	//		HAL_ADC_Stop(hadc);
+	//
+	//		ADC_Select_CH0();
+	//		HAL_ADC_Start(hadc);
+	//		HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+	//		uint16_t LumValue_5 = HAL_ADC_GetValue(hadc);
+	//			if (LumValue_5 < LUM5THRESHOLD && Play5 !=true){
+	//				srv_midi_internal_sendNote(PLAY5_NOTE, 1, 50, huart1);
+	//				Play5 = true;
+	//			}
+	//			else if (LumValue_5 >= LUM5THRESHOLD && Play5 == true) {
+	//				Play5 = false;
+	//				srv_midi_internal_sendNote(PLAY5_NOTE, 1, 0, huart1);
+	//			}
+	//		HAL_ADC_Stop(hadc);
+	}
+
 }
 
 void ADC_Select_CH11 (void)
@@ -633,6 +788,42 @@ void ADC_Select_CH11 (void)
 	  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
 	  */
 	  sConfig.Channel = ADC_CHANNEL_11;
+	  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+}
+
+void ADC_Select_CH12 (void)
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+	  */
+	  sConfig.Channel = ADC_CHANNEL_12;
+	  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+}
+
+void ADC_Select_CH13 (void)
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+	  */
+	  sConfig.Channel = ADC_CHANNEL_13;
+	  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+}
+
+void ADC_Select_CH0 (void)
+{
+	ADC_ChannelConfTypeDef sConfig = {0};
+	  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+	  */
+	  sConfig.Channel = ADC_CHANNEL_0;
 	  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
 	  {
 	    Error_Handler();
