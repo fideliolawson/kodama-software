@@ -42,8 +42,6 @@
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc;
 
-I2C_HandleTypeDef hi2c1;
-
 TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart1;
@@ -79,9 +77,13 @@ bool initPassed = false;
 int lum1average = 0;
 int lum2average = 0;
 int lum3average = 0;
+int lum4average = 0;
+int lum5average = 0;
 int Lum1threshold = 0;
 int Lum2threshold = 0;
 int Lum3threshold = 0;
+int Lum4threshold = 0;
+int Lum5threshold = 0;
 
 /* USER CODE END PV */
 
@@ -92,7 +94,6 @@ static void MX_USART2_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_ADC_Init(void);
 static void MX_TIM3_Init(void);
-static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 void EXTI4_15_IRQHandler_Config(void);
 void GET_ADC_Value(void);
@@ -101,6 +102,8 @@ void ADC_Select_CH10 (void);
 void ADC_Select_CH0 (void);
 void ADC_Select_CH12 (void);
 void ADC_Select_CH13 (void);
+void CallibrationPhoto(ADC_HandleTypeDef* hadc);
+void PhotoProcess(ADC_HandleTypeDef* hadc);
 
 /* USER CODE END PFP */
 
@@ -140,7 +143,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_ADC_Init();
   MX_TIM3_Init();
-  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(1000);
   HAL_ADCEx_Calibration_Start(&hadc);
@@ -203,9 +205,8 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_I2C1;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
-  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -251,47 +252,41 @@ static void MX_ADC_Init(void)
   }
   /** Configure for the selected ADC regular channel to be converted.
   */
-  sConfig.Channel = ADC_CHANNEL_10;
+  sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
   sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
   if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
-//  /** Configure for the selected ADC regular channel to be converted.
-//  */
-//  sConfig.Channel = ADC_CHANNEL_10;
-//  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_4;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_10;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /** Configure for the selected ADC regular channel to be converted.
   */
   sConfig.Channel = ADC_CHANNEL_11;
-  sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
   if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
   /** Configure for the selected ADC regular channel to be converted.
   */
-  sConfig.Channel = ADC_CHANNEL_12;
-  sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.Channel = ADC_CHANNEL_13;
   if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  /** Configure for the selected ADC regular channel to be converted.
-  */
-//  sConfig.Channel = ADC_CHANNEL_13;
-//  sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
-//  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
-//  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
   /* USER CODE BEGIN ADC_Init 2 */
 
   /** Configure for the selected ADC regular channel to be converted.
@@ -321,13 +316,22 @@ static void MX_ADC_Init(void)
     }
     /** Configure for the selected ADC regular channel to be converted.
     */
-    sConfig.Channel = ADC_CHANNEL_12;
+    sConfig.Channel = ADC_CHANNEL_4;
     sConfig.Rank = 3;
     sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
     if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
     {
       Error_Handler();
     }
+    /** Configure for the selected ADC regular channel to be converted.
+        */
+	sConfig.Channel = ADC_CHANNEL_0;
+	sConfig.Rank = 4;
+	sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+	if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+	{
+	  Error_Handler();
+	}
     /** Configure for the selected ADC regular channel to be converted.
     */
 //    sConfig.Channel = ADC_CHANNEL_13;
@@ -339,52 +343,6 @@ static void MX_ADC_Init(void)
 //    }
 
   /* USER CODE END ADC_Init 2 */
-
-}
-
-/**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x0000020B;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure Analogue filter
-  */
-  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Configure Digital filter
-  */
-  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
 
 }
 
@@ -407,9 +365,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 74;
+  htim3.Init.Prescaler = 500;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 63999;
+  htim3.Init.Period = 65535;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -540,8 +498,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : UpPad2_Pin Photo_resistor4B10_Pin Piezo3_Pin DownPad4_Pin */
-  GPIO_InitStruct.Pin = UpPad2_Pin|Photo_resistor4B10_Pin|Piezo3_Pin|DownPad4_Pin;
+  /*Configure GPIO pins : UpPad2_Pin DownPad3_Pin Piezo3_Pin DownPad4_Pin */
+  GPIO_InitStruct.Pin = UpPad2_Pin|DownPad3_Pin|Piezo3_Pin|DownPad4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -720,8 +678,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             the HAL_TIM_PeriodElapsedCallback could be implemented in the user file
    */
  //Non blocking delay for getting ADC value every x ms
-  ADC_Select_CH10();
-  GET_ADC_Value();
+  //ADC_Select_CH10();
+  //GET_ADC_Value();
+  if (initPassed == false){
+		CallibrationPhoto(&hadc);
+	}
+	else {
+		PhotoProcess(&hadc);
+	}
   HAL_TIM_Base_Stop_IT(&htim3);
   HAL_TIM_Base_Start_IT(&htim3);
 
@@ -730,82 +694,122 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) //Callback when ADC got a value
 {
+
     // Read & Update The ADC Result
 	//HAL_Delay(1000);
 		if (initPassed == false){
-			if(nbTest<11){
-				//HAL_Delay(DELAYUPDATEPHOTO);
-				uint16_t LumValue_1 = HAL_ADC_GetValue(hadc);
-				if (nbTest !=0){lum1average = LumValue_1 + lum1average;}
-				HAL_ADC_Stop_IT(hadc);
-				//ADC_Select_CH11();
-				//HAL_Delay(DELAYUPDATEPHOTO);
-				HAL_ADC_Start(hadc);
-				HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
-				uint16_t LumValue_2 = HAL_ADC_GetValue(hadc);
-				if (nbTest != 0){lum2average = LumValue_2 + lum2average;}
-				//HAL_ADC_Stop(hadc);
-
-				//ADC_Select_CH12();
-				//HAL_Delay(DELAYUPDATEPHOTO);
-				//HAL_ADC_Start(hadc);
-				HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
-				uint16_t LumValue_3 = HAL_ADC_GetValue(hadc);
-				if (nbTest != 0){lum3average = LumValue_3 + lum3average;}
-				HAL_ADC_Stop(hadc);
-
-				nbTest++;
-			}
-			else {
-				Lum1threshold = lum1average/10 - 100;
-				Lum2threshold = lum2average/10 - 100;
-				Lum3threshold = lum3average/10 - 100;
-				initPassed = true;
-			}
+			CallibrationPhoto(hadc);
 		}
-		if (initPassed == true){
+		else {
+			PhotoProcess(hadc);
+		}
+
+}
+
+void CallibrationPhoto(ADC_HandleTypeDef* hadc){
+	if(nbTest<11){
 		//HAL_Delay(DELAYUPDATEPHOTO);
-			uint16_t LumValue_1 = HAL_ADC_GetValue(hadc);
-			if (LumValue_1 < Lum1threshold && Play1 !=true){
-				srv_midi_internal_sendNote(PLAY1_NOTE, 7, 50, huart1);
-				Play1 = true;
-			}
-			else if (LumValue_1 >= Lum1threshold && Play1 == true) {
-				Play1 = false;
-				srv_midi_internal_sendNote(PLAY1_NOTE, 7, 0, huart1);
-			}
+		HAL_ADC_Start(hadc);
+		HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+		uint16_t LumValue_1 = HAL_ADC_GetValue(hadc);
+		if (nbTest !=0){lum1average = LumValue_1 + lum1average;}
+		//ADC_Select_CH11();
+		//HAL_Delay(DELAYUPDATEPHOTO);
+		HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+		uint16_t LumValue_2 = HAL_ADC_GetValue(hadc);
+		if (nbTest != 0){lum2average = LumValue_2 + lum2average;}
+		//HAL_ADC_Stop(hadc);
 
-			HAL_ADC_Stop_IT(hadc);
+		//ADC_Select_CH12();
+		//HAL_Delay(DELAYUPDATEPHOTO);
+		//HAL_ADC_Start(hadc);
+		HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+		uint16_t LumValue_3 = HAL_ADC_GetValue(hadc);
+		if (nbTest != 0){lum3average = LumValue_3 + lum3average;}
 
-			//ADC_Select_CH11();
-			//HAL_Delay(DELAYUPDATEPHOTO);
-			HAL_ADC_Start(hadc);
-			HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
-			uint16_t LumValue_2 = HAL_ADC_GetValue(hadc);
-			if (LumValue_2 < Lum2threshold && Play2 !=true){
-				srv_midi_internal_sendNote(PLAY2_NOTE, 7, 50, huart1);
-				Play2 = true;
-			}
-			else if (LumValue_2 >= Lum2threshold && Play2 == true) {
-				Play2 = false;
-				srv_midi_internal_sendNote(PLAY2_NOTE, 7, 0, huart1);
-			}
-			//HAL_ADC_Stop(hadc);
+		HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+		uint16_t LumValue_4 = HAL_ADC_GetValue(hadc);
+		if (nbTest != 0){lum4average = LumValue_4 + lum4average;}
 
-			//ADC_Select_CH12();
-			//HAL_Delay(DELAYUPDATEPHOTO);
-			//HAL_ADC_Start(hadc);
-			HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
-			uint16_t LumValue_3 = HAL_ADC_GetValue(hadc);
-			if (LumValue_3 < Lum3threshold && Play3 !=true){
-				srv_midi_internal_sendNote(PLAY3_NOTE, 7, 50, huart1);
-				Play3 = true;
-			}
-			else if (LumValue_3 >= Lum3threshold && Play3 == true) {
-				Play3 = false;
-				srv_midi_internal_sendNote(PLAY3_NOTE, 7, 0, huart1);
-			}
-			HAL_ADC_Stop(hadc);
+//		HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+//		uint16_t LumValue_5 = HAL_ADC_GetValue(hadc);
+//		if (nbTest != 0){lum5average = LumValue_5 + lum5average;}
+		HAL_ADC_Stop(hadc);
+
+		nbTest++;
+	}
+	else {
+		Lum1threshold = lum1average/10 - 100;
+		Lum2threshold = lum2average/10 - 100;
+		Lum3threshold = lum3average/10 - 100;
+		Lum4threshold = lum4average/10 - 100;
+		//Lum5threshold = lum5average/10 - 100;
+		initPassed = true;
+	}
+}
+
+void PhotoProcess(ADC_HandleTypeDef* hadc){
+	HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+	uint16_t LumValue_1 = HAL_ADC_GetValue(hadc);
+	if (LumValue_1 < Lum1threshold && Play1 !=true){
+		srv_midi_internal_sendNote(PLAY1_NOTE, 7, 50, huart1);
+		Play1 = true;
+	}
+	else if (LumValue_1 >= Lum1threshold && Play1 == true) {
+		Play1 = false;
+		srv_midi_internal_sendNote(PLAY1_NOTE, 7, 0, huart1);
+	}
+	//ADC_Select_CH11();
+	//HAL_Delay(DELAYUPDATEPHOTO);
+	HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+	uint16_t LumValue_2 = HAL_ADC_GetValue(hadc);
+	if (LumValue_2 < Lum2threshold && Play2 !=true){
+		srv_midi_internal_sendNote(PLAY2_NOTE, 7, 50, huart1);
+		Play2 = true;
+	}
+	else if (LumValue_2 >= Lum2threshold && Play2 == true) {
+		Play2 = false;
+		srv_midi_internal_sendNote(PLAY2_NOTE, 7, 0, huart1);
+	}
+	//HAL_ADC_Stop(hadc);
+
+	//ADC_Select_CH12();
+	//HAL_Delay(DELAYUPDATEPHOTO);
+	//HAL_ADC_Start(hadc);
+	HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+	uint16_t LumValue_3 = HAL_ADC_GetValue(hadc);
+	if (LumValue_3 < Lum3threshold && Play3 !=true){
+		srv_midi_internal_sendNote(PLAY3_NOTE, 7, 50, huart1);
+		Play3 = true;
+	}
+	else if (LumValue_3 >= Lum3threshold && Play3 == true) {
+		Play3 = false;
+		srv_midi_internal_sendNote(PLAY3_NOTE, 7, 0, huart1);
+	}
+
+	HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+	uint16_t LumValue_4 = HAL_ADC_GetValue(hadc);
+	if (LumValue_4 < Lum4threshold && Play4 !=true){
+		srv_midi_internal_sendNote(PLAY4_NOTE, 7, 50, huart1);
+		Play4 = true;
+	}
+	else if (LumValue_4 >= Lum4threshold && Play4 == true) {
+		Play4 = false;
+		srv_midi_internal_sendNote(PLAY4_NOTE, 7, 0, huart1);
+	}
+
+//	HAL_ADC_PollForConversion(hadc, HAL_MAX_DELAY);
+//	uint16_t LumValue_5 = HAL_ADC_GetValue(hadc);
+//	if (LumValue_5 < Lum5threshold && Play5 !=true){
+//		srv_midi_internal_sendNote(PLAY5_NOTE, 7, 50, huart1);
+//		Play5 = true;
+//	}
+//	else if (LumValue_5 >= Lum5threshold && Play5 == true) {
+//		Play5 = false;
+//		srv_midi_internal_sendNote(PLAY5_NOTE, 7, 0, huart1);
+//	}
+	HAL_ADC_Stop(hadc);
 
 			//ADC_Select_CH13();
 			//HAL_ADC_Start(hadc);
@@ -834,7 +838,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) //Callback when ADC got a
 //				srv_midi_internal_sendNote(PLAY5_NOTE, 7, 0, huart1);
 //			}
 //			HAL_ADC_Stop(hadc);
-	}
 
 }
 

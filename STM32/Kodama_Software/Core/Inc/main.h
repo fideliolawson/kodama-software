@@ -73,8 +73,6 @@ void Error_Handler(void);
 #define Photo_resistor1_GPIO_Port GPIOC
 #define Photo_resistor2_Pin GPIO_PIN_1
 #define Photo_resistor2_GPIO_Port GPIOC
-#define Photo_resistor3_Pin GPIO_PIN_2
-#define Photo_resistor3_GPIO_Port GPIOC
 #define Photo_resistor4_Pin GPIO_PIN_3
 #define Photo_resistor4_GPIO_Port GPIOC
 #define Photo_resistor5_Pin GPIO_PIN_0
@@ -86,6 +84,8 @@ void Error_Handler(void);
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
+#define Photo_resistor3_Pin GPIO_PIN_4
+#define Photo_resistor3_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
 #define UpPad1_Pin GPIO_PIN_6
@@ -97,9 +97,9 @@ void Error_Handler(void);
 #define UpPad2_Pin GPIO_PIN_0
 #define UpPad2_GPIO_Port GPIOB
 #define UpPad2_EXTI_IRQn EXTI0_1_IRQn
-#define Photo_resistor4B10_Pin GPIO_PIN_10
-#define Photo_resistor4B10_GPIO_Port GPIOB
-#define Photo_resistor4B10_EXTI_IRQn EXTI4_15_IRQn
+#define DownPad3_Pin GPIO_PIN_10
+#define DownPad3_GPIO_Port GPIOB
+#define DownPad3_EXTI_IRQn EXTI4_15_IRQn
 #define Piezo3_Pin GPIO_PIN_15
 #define Piezo3_GPIO_Port GPIOB
 #define Piezo3_EXTI_IRQn EXTI4_15_IRQn
