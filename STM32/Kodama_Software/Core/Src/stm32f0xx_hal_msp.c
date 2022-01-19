@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
+extern DMA_HandleTypeDef hdma_adc;
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
@@ -106,12 +107,12 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**ADC GPIO Configuration
     PC0     ------> ADC_IN10
-    PC1     ------> ADC_IN11
+    PC2     ------> ADC_IN12
     PC3     ------> ADC_IN13
     PA0     ------> ADC_IN0
     PA4     ------> ADC_IN4
     */
-    GPIO_InitStruct.Pin = Photo_resistor1_Pin|Photo_resistor2_Pin|Photo_resistor4_Pin;
+    GPIO_InitStruct.Pin = Photo_resistor1_Pin|photo2_Pin|Photo_resistor4_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -121,9 +122,23 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    /* ADC1 interrupt Init */
-    HAL_NVIC_SetPriority(ADC1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(ADC1_IRQn);
+    /* ADC1 DMA Init */
+    /* ADC Init */
+    hdma_adc.Instance = DMA1_Channel1;
+    hdma_adc.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_adc.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_adc.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_adc.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_adc.Init.Mode = DMA_CIRCULAR;
+    hdma_adc.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_adc) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(hadc,DMA_Handle,hdma_adc);
+
   /* USER CODE BEGIN ADC1_MspInit 1 */
 
   /* USER CODE END ADC1_MspInit 1 */
@@ -149,17 +164,17 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
 
     /**ADC GPIO Configuration
     PC0     ------> ADC_IN10
-    PC1     ------> ADC_IN11
+    PC2     ------> ADC_IN12
     PC3     ------> ADC_IN13
     PA0     ------> ADC_IN0
     PA4     ------> ADC_IN4
     */
-    HAL_GPIO_DeInit(GPIOC, Photo_resistor1_Pin|Photo_resistor2_Pin|Photo_resistor4_Pin);
+    HAL_GPIO_DeInit(GPIOC, Photo_resistor1_Pin|photo2_Pin|Photo_resistor4_Pin);
 
     HAL_GPIO_DeInit(GPIOA, Photo_resistor5_Pin|Photo_resistor3_Pin);
 
-    /* ADC1 interrupt DeInit */
-    HAL_NVIC_DisableIRQ(ADC1_IRQn);
+    /* ADC1 DMA DeInit */
+    HAL_DMA_DeInit(hadc->DMA_Handle);
   /* USER CODE BEGIN ADC1_MspDeInit 1 */
 
   /* USER CODE END ADC1_MspDeInit 1 */

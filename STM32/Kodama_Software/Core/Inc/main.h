@@ -58,9 +58,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
-#define B1_EXTI_IRQn EXTI4_15_IRQn
 #define RCC_OSC32_IN_Pin GPIO_PIN_14
 #define RCC_OSC32_IN_GPIO_Port GPIOC
 #define RCC_OSC32_OUT_Pin GPIO_PIN_15
@@ -71,15 +68,15 @@ void Error_Handler(void);
 #define RCC_OSC_OUT_GPIO_Port GPIOF
 #define Photo_resistor1_Pin GPIO_PIN_0
 #define Photo_resistor1_GPIO_Port GPIOC
-#define Photo_resistor2_Pin GPIO_PIN_1
-#define Photo_resistor2_GPIO_Port GPIOC
+#define DownPad1_Pin GPIO_PIN_1
+#define DownPad1_GPIO_Port GPIOC
+#define DownPad1_EXTI_IRQn EXTI0_1_IRQn
+#define photo2_Pin GPIO_PIN_2
+#define photo2_GPIO_Port GPIOC
 #define Photo_resistor4_Pin GPIO_PIN_3
 #define Photo_resistor4_GPIO_Port GPIOC
 #define Photo_resistor5_Pin GPIO_PIN_0
 #define Photo_resistor5_GPIO_Port GPIOA
-#define DownPad2_Pin GPIO_PIN_1
-#define DownPad2_GPIO_Port GPIOA
-#define DownPad2_EXTI_IRQn EXTI0_1_IRQn
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
@@ -91,19 +88,19 @@ void Error_Handler(void);
 #define UpPad1_Pin GPIO_PIN_6
 #define UpPad1_GPIO_Port GPIOA
 #define UpPad1_EXTI_IRQn EXTI4_15_IRQn
-#define DownPad1_Pin GPIO_PIN_7
-#define DownPad1_GPIO_Port GPIOA
-#define DownPad1_EXTI_IRQn EXTI4_15_IRQn
 #define UpPad2_Pin GPIO_PIN_0
 #define UpPad2_GPIO_Port GPIOB
 #define UpPad2_EXTI_IRQn EXTI0_1_IRQn
 #define DownPad3_Pin GPIO_PIN_10
 #define DownPad3_GPIO_Port GPIOB
 #define DownPad3_EXTI_IRQn EXTI4_15_IRQn
-#define Piezo3_Pin GPIO_PIN_15
-#define Piezo3_GPIO_Port GPIOB
-#define Piezo3_EXTI_IRQn EXTI4_15_IRQn
-#define Piezo2_Pin GPIO_PIN_9
+#define DownPad2_Pin GPIO_PIN_13
+#define DownPad2_GPIO_Port GPIOB
+#define DownPad2_EXTI_IRQn EXTI4_15_IRQn
+#define TapMap_Pin GPIO_PIN_15
+#define TapMap_GPIO_Port GPIOB
+#define TapMap_EXTI_IRQn EXTI4_15_IRQn
+#define Piezo2_Pin GPIO_PIN_7
 #define Piezo2_GPIO_Port GPIOC
 #define Piezo2_EXTI_IRQn EXTI4_15_IRQn
 #define Piezo1_Pin GPIO_PIN_8
@@ -113,11 +110,12 @@ void Error_Handler(void);
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define DownPad4_Pin GPIO_PIN_3
-#define DownPad4_GPIO_Port GPIOB
 #define UpPad4_Pin GPIO_PIN_5
 #define UpPad4_GPIO_Port GPIOB
 #define UpPad4_EXTI_IRQn EXTI4_15_IRQn
+#define Piezo3_Pin GPIO_PIN_9
+#define Piezo3_GPIO_Port GPIOB
+#define Piezo3_EXTI_IRQn EXTI4_15_IRQn
 /* USER CODE BEGIN Private defines */
 #define PLAY1_NOTE 24
 #define PLAY2_NOTE 25
